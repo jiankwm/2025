@@ -4,6 +4,7 @@
       "name": "windows-gcc-x64",
       "includePath": [
         "${workspaceFolder}/**"
+        "C:/vcpkg/installed/x64-windows/include"
       ],
       "compilerPath": "C:/msys64/ucrt64/bin/gcc.exe",
       "cStandard": "${default}",
