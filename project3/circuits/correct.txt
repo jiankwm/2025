@@ -1,3 +1,4 @@
+//带log的版本
 pragma circom 2.2.2;
 
 // S-box Template: x^d (here d=5)
@@ -19,22 +20,30 @@ template SBox() {
 }
 
 
+
 // 实现 Poseidon2 的单轮逻辑
 
 template Poseidon2Round(roundType, roundIdx, t_state_width, total_rounds) {
     signal input in_state[t_state_width];
     signal output out_state[t_state_width];
-
+    log("---------------------------------------");
+    log("Circom Round: ", roundIdx);
     // Hardcode t_width = 3 for array dimensions here
     var MDS[3][3]; // <--- HARDCODED VALUE (for t=3)
     MDS[0][0] = 2; MDS[0][1] = 1; MDS[0][2] = 1;
     MDS[1][0] = 1; MDS[1][1] = 2; MDS[1][2] = 1;
     MDS[2][0] = 1; MDS[2][1] = 1; MDS[2][2] = 2;
 
+    for (var i = 0; i < t_state_width; i++) {
+        log("  In State[", i, "]: ", in_state[i]);
+    }
+    log("  Round Type: ", roundType); 
+
+
     // Hardcode total_rounds = 64 and t_width = 3 for array dimensions here
     var roundConstants[64][3]; 
     for (var r = 0; r < 64; r++) { 
-        for (var i = 0; i < 3; i++) {
+        for (var i = 0; i < 3; i++) { 
             roundConstants[r][i] = (r * 3 + i + 1); 
         }
     }
@@ -44,19 +53,22 @@ template Poseidon2Round(roundType, roundIdx, t_state_width, total_rounds) {
     for (var i = 0; i < t_state_width; i++) {
         state_after_rc[i] <== in_state[i] + roundConstants[roundIdx][i];
     }
+    for (var i = 0; i < t_state_width; i++) {
+        log("  State After RC[", i, "]: ", state_after_rc[i]);
+    }
 
     // 2. S-box Application
     signal state_after_sbox[t_state_width];
     
-    
     component sboxComponents[t_state_width]; 
 
-    if (roundType == 0) { // Full S-box
+    if (roundType == 0) { 
         for (var i = 0; i < t_state_width; i++) {
             sboxComponents[i] = SBox(); 
             sboxComponents[i].x <== state_after_rc[i]; 
             state_after_sbox[i] <== sboxComponents[i].out; 
         }
+        log("  S-box Type: Full");
     } else { 
         sboxComponents[0] = SBox(); 
         sboxComponents[0].x <== state_after_rc[0]; 
@@ -65,6 +77,10 @@ template Poseidon2Round(roundType, roundIdx, t_state_width, total_rounds) {
         for (var i = 1; i < t_state_width; i++) { 
             state_after_sbox[i] <== state_after_rc[i];
         }
+        log("  S-box Type: Partial");
+    }
+    for (var i = 0; i < t_state_width; i++) {
+        log("  State After S-box[", i, "]: ", state_after_sbox[i]);
     }
 
     // 3. MDS Matrix Multiplication
@@ -74,10 +90,14 @@ template Poseidon2Round(roundType, roundIdx, t_state_width, total_rounds) {
                          (MDS[i][1] * state_after_sbox[1]) +
                          (MDS[i][2] * state_after_sbox[2]);
     }
+    for (var i = 0; i < t_state_width; i++) {
+        log("  Out State[", i, "]: ", out_state[i]);
+    }
 }
 
 // 实现整个 Poseidon2 哈希算法
 template Poseidon2Hash() {
+  
     var RF_FULL_ROUNDS_LOCAL = 8;
     var PARTIAL_ROUNDS_LOCAL = 56;
     var TOTAL_ROUNDS_LOCAL = RF_FULL_ROUNDS_LOCAL + PARTIAL_ROUNDS_LOCAL; 
@@ -86,29 +106,33 @@ template Poseidon2Hash() {
     signal input in_private[T_STATE_WIDTH_LOCAL - 1]; 
     signal input hash_output; 
 
+    
     signal states[TOTAL_ROUNDS_LOCAL + 1][T_STATE_WIDTH_LOCAL]; 
 
     states[0][0] <== in_private[0];
     states[0][1] <== in_private[1];
-    states[0][2] <== 0; // Padding or capacity element
+    states[0][2] <== 0; 
 
     component rounds[TOTAL_ROUNDS_LOCAL]; 
 
     for (var r = 0; r < TOTAL_ROUNDS_LOCAL; r++) {
         var roundType = (r < (RF_FULL_ROUNDS_LOCAL / 2)) || (r >= TOTAL_ROUNDS_LOCAL - (RF_FULL_ROUNDS_LOCAL / 2)) ? 0 : 1;
         
+        
         rounds[r] = Poseidon2Round(roundType, r, T_STATE_WIDTH_LOCAL, TOTAL_ROUNDS_LOCAL);
         
+      
         for (var i = 0; i < T_STATE_WIDTH_LOCAL; i++) {
             rounds[r].in_state[i] <== states[r][i];
         }
 
+        
         for (var i = 0; i < T_STATE_WIDTH_LOCAL; i++) {
             states[r+1][i] <== rounds[r].out_state[i];
         }
     }
 
-    // The final hash result is the first element of the state after all rounds
+
     hash_output === states[TOTAL_ROUNDS_LOCAL][0];
 }
 
