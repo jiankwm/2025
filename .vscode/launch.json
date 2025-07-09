@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "e:/Desktop/网安创新实践/2025/project1",
-      "program": "e:/Desktop/网安创新实践/2025/project1/build/Debug/outDebug",
+      "cwd": "e:/Desktop/wangan/2025/project3/circuits",
+      "program": "e:/Desktop/wangan/2025/project3/circuits/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
