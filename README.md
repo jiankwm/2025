@@ -18,3 +18,5 @@ project 3: 用circom实现poseidon2哈希算法的电路
 Project 4: sm3 的软件实现与优化 
 
 Project 5: sm2 的软件实现优化 考虑到SM2用C 语言来做比较复杂，用python来做 sm2的 基础实现以及各种算法的改进尝试
+
+Project 6:  来自报告  google password checkup，参考论文 https://eprint.iacr.org/2019/723.pdf 的 section 3.1 ，也即 Figure 2 中展示的协议，尝试实现该协议，（编程语言不限）。
